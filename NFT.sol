@@ -71,4 +71,35 @@ contract NFT is ERC721A, ReentrancyGuard, Ownable, Pausable {
         require(_signerAddress != address(0));
         signerAddress = _signerAddress;
     }
+
+    /**
+     * Update the base token URI
+     */
+    function setBaseURI(string calldata _newBaseURI) external onlyOwner {
+        baseTokenURI = _newBaseURI;
+    }
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
+    }
+
+    function verifyAddressSigner(bytes32 messageHash, bytes memory signature) private view returns (bool) {
+        return signerAddress == messageHash.toEthSignedMessageHash().recover(signature);
+    }
+
+    function hashMessage(address sender, uint256 maximumAllowedMints) private pure returns (bytes32) {
+        return keccak256(abi.encode(sender, maximumAllowedMints));
+    }
+
+    /**
+     * @notice Allow contract owner to withdraw funds to its own account.
+     */
+    function withdraw() external onlyOwner {
+        payable(owner()).transfer(address(this).balance);
+    }
+
 }
