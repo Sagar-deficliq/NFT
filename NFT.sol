@@ -51,14 +51,7 @@ contract NFT is ERC721A, Ownable {
       emit Unpaused();
     }
     
-
-
-
-    // enum signPrefixx {HEADQUARTER, WARFACTORY, WORKER, PEACEMAKER}
-
-    // mapping (uint256 => signPrefixx) private _currentSignPrefix;
-
-    string private _tokenBaseURI = "https://nft-api.flyingnobita.workers.dev/api/metadata/";
+    string private _tokenBaseURI;
     address private _signerAddress;
     string private signPrefix = "This is DystoWorld NFT";
 
@@ -118,7 +111,7 @@ contract NFT is ERC721A, Ownable {
         } else if(keccak256(abi.encodePacked(metadata)) == "PEACEMAKER"){
 
         }else if(keccak256(abi.encodePacked(metadata)) == "WORKER"){
-            
+
         }
         
 
