@@ -9,10 +9,10 @@ contract NFT is ERC721A, Ownable {
 
     using Strings for uint256;
 
-    uint256 public constant SALE_MAX_HEADQUARTER = 100;
-    uint256 public constant SALE_MAX_WARFACTORY = 100;
-    uint256 public constant SALE_MAX_WORKER = 100;
-    uint256 public constant SALE_MAX_PEACEMAKER = 100;
+    uint256 public constant SALE_MAX_HEADQUARTER = 500;
+    uint256 public constant SALE_MAX_WARFACTORY = 1500;
+    uint256 public constant SALE_MAX_WORKER = 3000;
+    uint256 public constant SALE_MAX_PEACEMAKER = 5500;
 
     uint256 public constant PER_MINT_HEADQUARTER = 1;
     uint256 public constant PER_MINT_WARFACTORY = 1;
@@ -24,17 +24,21 @@ contract NFT is ERC721A, Ownable {
     uint256 public constant NFT_PRICE_WORKER = 0.5 ether;
     uint256 public constant NFT_PRICE_PEACEMAKER = 0.5 ether;
 
-    address public PAYOUT_ADDRESS;
-
     enum nftType {HEADQUARTER, WARFACTORY, WORKER, PEACEMAKER}
 
     mapping (uint256 => nftType) private _currentNftType;
 
-    mapping(address => bool) private _minters;// events to handle pause or unpause for NFT Sale 
-
     mapping (address => uint256) public totalMintsPerAddress;
     
     bool public isSaleActive = false;
+
+    address private _signerAddress;
+    address public payoutAddress;
+
+    string private _tokenBaseURI;
+    string private signPrefix = "This is DystoWorld NFT";
+
+    uint256 public maxSupply;
 
     event Paused();
     event Unpaused();
@@ -50,16 +54,9 @@ contract NFT is ERC721A, Ownable {
       isSaleActive = false;
       emit Unpaused();
     }
-    
-    string private _tokenBaseURI;
-    address private _signerAddress;
-    string private signPrefix = "This is DystoWorld NFT";
-
-    uint256 public maxSupply;
-    bool public saleLive = true;
 
     constructor() ERC721A("NFT", "NFT") {
-        PAYOUT_ADDRESS = msg.sender;
+        payoutAddress = msg.sender;
         _signerAddress = msg.sender;
     }
 
@@ -100,25 +97,39 @@ contract NFT is ERC721A, Ownable {
             totalMintsPerAddress[msg.sender] += mintNumber;
             _currentNftType[mintNumber] = nftType.HEADQUARTER;
         } else if(keccak256(abi.encodePacked(metadata)) == "WARFACTORY"){
-            require(maxSupply + mintNumber <= SALE_MAX_HEADQUARTER, "NFT :: Cannot mint beyond max supply!!");
-            require(totalMintsPerAddress[msg.sender] + mintNumber <= PER_MINT_HEADQUARTER, "NFT :: Cannot mint beyond maximum allowed mint!!");
-            require(msg.value >= (NFT_PRICE_HEADQUARTER * mintNumber), "NFT :: Payment is below the price!!");
+            require(maxSupply + mintNumber <= SALE_MAX_WARFACTORY, "NFT :: Cannot mint beyond max supply!!");
+            require(totalMintsPerAddress[msg.sender] + mintNumber <= PER_MINT_WARFACTORY, "NFT :: Cannot mint beyond maximum allowed mint!!");
+            require(msg.value >= (NFT_PRICE_WARFACTORY * mintNumber), "NFT :: Payment is below the price!!");
             require(verifyTransaction(msg.sender, mintNumber, signature, metadata),"NFT: Contract Mint Not Allowed");
             _safeMint(msg.sender, mintNumber);
             maxSupply += mintNumber;
             totalMintsPerAddress[msg.sender] += mintNumber;
-            _currentNftType[mintNumber] = nftType.HEADQUARTER;
+            _currentNftType[mintNumber] = nftType.WARFACTORY;
         } else if(keccak256(abi.encodePacked(metadata)) == "PEACEMAKER"){
+            require(maxSupply + mintNumber <= SALE_MAX_PEACEMAKER, "NFT :: Cannot mint beyond max supply!!");
+            require(totalMintsPerAddress[msg.sender] + mintNumber <= PER_MINT_PEACEMAKER, "NFT :: Cannot mint beyond maximum allowed mint!!");
+            require(msg.value >= (NFT_PRICE_PEACEMAKER * mintNumber), "NFT :: Payment is below the price!!");
+            require(verifyTransaction(msg.sender, mintNumber, signature, metadata),"NFT: Contract Mint Not Allowed");
+            _safeMint(msg.sender, mintNumber);
+            maxSupply += mintNumber;
+            totalMintsPerAddress[msg.sender] += mintNumber;
+            _currentNftType[mintNumber] = nftType.PEACEMAKER;
 
-        }else if(keccak256(abi.encodePacked(metadata)) == "WORKER"){
-
+        } else if(keccak256(abi.encodePacked(metadata)) == "WORKER"){
+            require(maxSupply + mintNumber <= SALE_MAX_WORKER, "NFT :: Cannot mint beyond max supply!!");
+            require(totalMintsPerAddress[msg.sender] + mintNumber <= PER_MINT_WORKER, "NFT :: Cannot mint beyond maximum allowed mint!!");
+            require(msg.value >= (NFT_PRICE_WORKER * mintNumber), "NFT :: Payment is below the price!!");
+            require(verifyTransaction(msg.sender, mintNumber, signature, metadata),"NFT: Contract Mint Not Allowed");
+            _safeMint(msg.sender, mintNumber);
+            maxSupply += mintNumber;
+            totalMintsPerAddress[msg.sender] += mintNumber;
+            _currentNftType[mintNumber] = nftType.WORKER;
         }
         
-
     }
 
     function withdraw() external onlyOwner {
-        payable(PAYOUT_ADDRESS).transfer(address(this).balance);
+        payable(payoutAddress).transfer(address(this).balance);
     }
 
  
